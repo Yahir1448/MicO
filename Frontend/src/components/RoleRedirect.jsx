@@ -46,13 +46,10 @@ const RoleRedirect = () => {
         case 'usuarionormal':
         case 'admin':
         default:
-          // Usuarios normales y admin se quedan en la página principal
           break;
       }
     }
   }, [navigate]);
-
-  // Renderizar HomePage por defecto
   return null;
 };
 

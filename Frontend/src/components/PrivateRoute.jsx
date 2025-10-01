@@ -4,7 +4,6 @@ import { Navigate } from 'react-router-dom';
 const isAuthenticated = () => {
   const token = localStorage.getItem('token');
   if (!token || token === 'null' || token === 'undefined' || token.trim() === '') return false;
-  // Opcional: podrías validar el formato del JWT aquí
   return true;
 };
 

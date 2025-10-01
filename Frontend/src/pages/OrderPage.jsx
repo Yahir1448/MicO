@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../components/UserContext';
-import { FaArrowLeft, FaCheckCircle, FaClock, FaUtensils, FaTruck, FaHome, FaShoppingBag } from 'react-icons/fa';
+import { FaArrowLeft, FaCheckCircle, FaClock, FaUtensils, FaTruck, FaHome, FaShoppingBag, FaBiking, FaMapMarkerAlt, FaCheck } from 'react-icons/fa';
 import axios from 'axios';
 
 const OrderPage = () => {
@@ -253,7 +253,7 @@ const OrderPage = () => {
           {/* Repartidor */}
           {order.repartidor_nombre && (
             <div style={{ marginBottom: '0.5rem', color: '#666', fontSize: '0.95rem' }}>
-              🚴 Repartidor: {order.repartidor_nombre}
+              <FaBiking style={{marginRight: '5px'}} /> Repartidor: {order.repartidor_nombre}
             </div>
           )}
 
@@ -261,7 +261,7 @@ const OrderPage = () => {
           {(order.direccion_completa || order.direccion_nombre) && (
             <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #e9ecef' }}>
               <div style={{ fontWeight: 600, color: '#495057', marginBottom: '0.25rem', fontSize: '0.9rem' }}>
-                📍 Dirección de entrega
+                <FaMapMarkerAlt style={{marginRight: '5px'}} /> Dirección de entrega
               </div>
               {order.direccion_nombre && (
                 <div style={{ fontWeight: 500, color: '#343a40', fontSize: '0.95rem' }}>
@@ -368,7 +368,7 @@ const OrderPage = () => {
                       fontSize: '0.7rem',
                       color: isCompleted ? '#fff' : '#999'
                     }}>
-                      {isCompleted ? '✓' : index + 1}
+                      {isCompleted ? <FaCheck /> : index + 1}
                     </div>
                     <span style={{ 
                       fontSize: '0.7rem', 

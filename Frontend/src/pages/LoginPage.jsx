@@ -21,7 +21,6 @@ const login = async (email, password) => {
   localStorage.setItem('email', response.data.email);
   localStorage.setItem('role', response.data.role);
   localStorage.setItem('telefono', response.data.telefono);
-  // Si el usuario es repartidor y la respuesta incluye el id del modelo Repartidor, guárdalo
   if (response.data.role === 'repartidor' && response.data.repartidor_model_id) {
     localStorage.setItem('repartidor_model_id', response.data.repartidor_model_id);
   }

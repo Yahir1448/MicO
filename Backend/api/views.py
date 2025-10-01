@@ -9,6 +9,7 @@ from rest_framework.exceptions import PermissionDenied
 from .models import Empresa, Producto, Pedido, Cart, CartItem, DireccionUsuario
 from .serializers import EmpresaSerializer, ProductoSerializer, PedidoSerializer, CartSerializer, DireccionUsuarioSerializer
 from .models import UbicacionRepartidor
+from django.db import transaction
 from .serializers import UbicacionRepartidorSerializer
 
 
@@ -20,8 +21,6 @@ class DireccionUsuarioViewSet(viewsets.ModelViewSet):
         return DireccionUsuario.objects.filter(usuario=self.request.user)
 
     def perform_create(self, serializer):
-        print(f"Datos recibidos: {self.request.data}")  # Debug
-        print(f"Usuario: {self.request.user}")  # Debug
         serializer.save(usuario=self.request.user)
 
 class CartViewSet(viewsets.ModelViewSet):
@@ -81,13 +80,14 @@ class EmpresaViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     queryset = Empresa.objects.all()
     serializer_class = EmpresaSerializer
-    # Quitar la restricción global para permitir endpoints públicos
-    # permission_classes = [IsAuthenticated]
 
     # Endpoint público para listar todas las empresas
     @action(detail=False, methods=['get'], url_path='public', permission_classes=[])
     def public(self, request):
+        search = request.query_params.get('search', None)
         empresas = Empresa.objects.all()
+        if search:
+            empresas = empresas.filter(nombre__icontains=search)
         serializer = self.get_serializer(empresas, many=True)
         return Response(serializer.data)
 
@@ -138,11 +138,6 @@ class PedidoViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='crear-multiple')
     def crear_multiple(self, request):
-        """
-        Endpoint para crear múltiples pedidos de diferentes empresas en una sola transacción
-        """
-        from django.db import transaction
-        
         pedidos_data = request.data.get('pedidos', [])
         if not pedidos_data or not isinstance(pedidos_data, list):
             return Response({'error': 'Se requiere una lista de pedidos en el campo "pedidos".'}, status=400)
@@ -255,12 +250,7 @@ class GuardarUbicacionRepartidor(APIView):
             latitud = request.data.get('latitud')
             longitud = request.data.get('longitud')
             
-            print(f"=== UBICACION REQUEST ===")
-            print(f"Usuario: {request.user.email} (ID: {request.user.id})")
-            print(f"Latitud: {latitud}, Longitud: {longitud}")
-            
             if not latitud or not longitud:
-                print("Error: latitud y longitud son requeridos")
                 return Response({'error': 'latitud y longitud son requeridos'}, 
                               status=status.HTTP_400_BAD_REQUEST)
             
@@ -272,7 +262,6 @@ class GuardarUbicacionRepartidor(APIView):
                 ubicacion.longitud = longitud
                 ubicacion.save()
                 action = "actualizada"
-                print(f"Ubicación actualizada para usuario {request.user.email}")
             except UbicacionRepartidor.DoesNotExist:
                 # Crear nueva ubicación
                 ubicacion = UbicacionRepartidor.objects.create(
@@ -280,16 +269,12 @@ class GuardarUbicacionRepartidor(APIView):
                     latitud=latitud,
                     longitud=longitud
                 )
-                action = "creada"
-                print(f"Nueva ubicación creada para usuario {request.user.email}")
-            
+                action = "creada"            
             serializer = UbicacionRepartidorSerializer(ubicacion)
             response_data = {
                 'message': f'Ubicación {action} exitosamente',
                 'data': serializer.data
-            }
-            print(f"Respuesta exitosa: {response_data}")
-            
+            }            
             return Response(response_data, status=status.HTTP_200_OK)
             
         except Exception as e:
@@ -303,7 +288,6 @@ class GuardarUbicacionRepartidor(APIView):
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get(self, request):
-        """Obtener ubicaciones de todos los repartidores activos"""
         try:
             # Obtener ubicaciones de los últimos 30 minutos para considerar como activos
             from datetime import timedelta
@@ -344,6 +328,5 @@ class GuardarUbicacionRepartidor(APIView):
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
-            print(f"Error al obtener ubicaciones: {str(e)}")
             return Response({'error': 'Error al obtener ubicaciones'}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)

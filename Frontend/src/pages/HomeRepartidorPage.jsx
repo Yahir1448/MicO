@@ -3,7 +3,7 @@ import axios from 'axios';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import '../styles/repartidor-home.css';
-import { FaMapMarkerAlt, FaRoute, FaEye, FaCheck, FaTimes, FaDollarSign, FaPhone, FaCalendarAlt, FaCreditCard, FaBox, FaUser } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaRoute, FaEye, FaCheck, FaTimes, FaDollarSign, FaPhone, FaCalendarAlt, FaCreditCard, FaBox, FaUser, FaTruck, FaHome } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -16,9 +16,9 @@ const HomeRepartidorPage = () => {
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
   const [mapInstances, setMapInstances] = useState({});
   const [repartidorUbicacion, setRepartidorUbicacion] = useState(null);
-  const [ubicacionPermiso, setUbicacionPermiso] = useState('pending'); // pending, granted, denied
-  const [cargandoMapa, setCargandoMapa] = useState({}); // Para mostrar estado de carga por pedido
-  const [actualizandoUbicacion, setActualizandoUbicacion] = useState(false); // Para mostrar cuándo se está actualizando
+  const [ubicacionPermiso, setUbicacionPermiso] = useState('pending');
+  const [cargandoMapa, setCargandoMapa] = useState({});
+  const [actualizandoUbicacion, setActualizandoUbicacion] = useState(false);
   const navigate = useNavigate();
   const repartidorId = Number(localStorage.getItem('repartidor_model_id'));
 
@@ -101,7 +101,6 @@ const HomeRepartidorPage = () => {
               headers: { Authorization: `Bearer ${token}` }
             });
           } catch (error) {
-            // Error al enviar ubicación al backend (no crítico)
           }
           
           setActualizandoUbicacion(false);
@@ -114,7 +113,7 @@ const HomeRepartidorPage = () => {
         { 
           enableHighAccuracy: true, 
           timeout: 10000, 
-          maximumAge: 5000 // Máximo 5 segundos de caché
+          maximumAge: 5000
         }
       );
     });
@@ -163,9 +162,8 @@ const HomeRepartidorPage = () => {
           // Actualizar todos los mapas existentes con la nueva ubicación
           actualizarMapasConNuevaUbicacion(nuevaUbicacion);
         } catch (error) {
-          // Error en actualización automática de ubicación
         }
-      }, 10000); // 10 segundos
+      }, 10000);
     }
 
     return () => {
@@ -195,7 +193,6 @@ const HomeRepartidorPage = () => {
             return; // Skip si no hay coordenadas válidas del cliente
           }
 
-          // Actualizar vista del mapa para incluir ambos puntos
           const bounds = new maplibregl.LngLatBounds()
             .extend([nuevaUbicacion.lng, nuevaUbicacion.lat])
             .extend([clientLng, clientLat]);
@@ -209,7 +206,6 @@ const HomeRepartidorPage = () => {
           // Buscar y actualizar el marcador del repartidor existente
           const marcadores = mapInstance._markers || [];
           marcadores.forEach(marker => {
-            // Verificar si es el marcador del repartidor (color azul)
             if (marker._color === '#2563eb') {
               marker.setLngLat([nuevaUbicacion.lng, nuevaUbicacion.lat]);
               
@@ -220,8 +216,11 @@ const HomeRepartidorPage = () => {
               );
               
               marker.setPopup(new maplibregl.Popup().setHTML(`
-                <div style="padding: 8px;">
-                  <strong>🚚 Tu ubicación (GPS)</strong><br>
+                <div style="padding: 8px; display: flex; align-items: center; gap: 8px;">
+                  <span style="color: #2563eb; display: flex; align-items: center;">
+                    <svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='#2563eb' viewBox='0 0 24 24'><path d='M20.5 10H19V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2h6a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-5a1.5 1.5 0 0 0-1.5-1.5zM5 7h12v3H5V7zm0 5h12v5H5v-5zm15 5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v5z'/></svg>
+                  </span>
+                  <strong>Tu ubicación (GPS)</strong><br>
                   <small>Actualizada: ${new Date().toLocaleTimeString()}<br>
                   Distancia: ${distancia.toFixed(2)} km<br>
                   Lat: ${nuevaUbicacion.lat.toFixed(6)}<br>
@@ -241,9 +240,8 @@ const HomeRepartidorPage = () => {
             obtenerYActualizarRuta(mapInstance, nuevaUbicacion, clientLat, clientLng);
           }
 
-          console.log(`✅ Mapa actualizado para pedido ${pedidoId}`);
         } catch (error) {
-          console.error(`❌ Error al actualizar mapa ${pedidoId}:`, error);
+          console.error(`Error al actualizar mapa ${pedidoId}:`, error);
         }
       }
     });
@@ -326,44 +324,29 @@ const HomeRepartidorPage = () => {
         }
       });
     } catch (error) {
-      console.error('❌ Error al agregar línea directa:', error);
+      console.error('Error al agregar línea directa:', error);
     }
   };
 
   // Función para crear mapa con ruta usando ubicaciones reales de la base de datos
   const crearMapaConRuta = async (pedidoId, contenedorId) => {
-    console.log('=== 🗺️ INICIANDO CREACIÓN DE MAPA CON DATOS REALES ===');
-    console.log('📦 Pedido ID:', pedidoId);
-    console.log('📋 Contenedor ID:', contenedorId);
-    
     // Marcar como cargando
     setCargandoMapa(prev => ({ ...prev, [pedidoId]: true }));
     
     // Verificar ubicación del repartidor
     if (!repartidorUbicacion) {
-      console.error('❌ Ubicación del repartidor no disponible');
+      console.error('Ubicación del repartidor no disponible');
       alert('Ubicación del repartidor no disponible. Por favor, permite el acceso a tu ubicación.');
       setCargandoMapa(prev => ({ ...prev, [pedidoId]: false }));
       return;
     }
 
-    console.log('✅ Ubicación actual del repartidor:', repartidorUbicacion);
-
     const pedido = pedidos.find(p => p.id === pedidoId);
     if (!pedido) {
-      console.error('❌ Pedido no encontrado para ID:', pedidoId);
+      console.error('Pedido no encontrado para ID:', pedidoId);
       setCargandoMapa(prev => ({ ...prev, [pedidoId]: false }));
       return;
     }
-
-    console.log('📦 Datos del pedido encontrado:', {
-      id: pedido.id,
-      cliente: pedido.cliente_nombre,
-      direccion: pedido.direccion_completa,
-      direccion_latitud: pedido.direccion_latitud,
-      direccion_longitud: pedido.direccion_longitud,
-      estado: pedido.estado
-    });
 
     // Obtener coordenadas del cliente desde la base de datos
     let clientLat = pedido.direccion_latitud;
@@ -373,19 +356,11 @@ const HomeRepartidorPage = () => {
     if (typeof clientLat === 'string') clientLat = parseFloat(clientLat);
     if (typeof clientLng === 'string') clientLng = parseFloat(clientLng);
     
-    console.log('🔄 Coordenadas del cliente procesadas:', {
-      lat: clientLat,
-      lng: clientLng,
-      isValidLat: clientLat && !isNaN(clientLat) && isFinite(clientLat),
-      isValidLng: clientLng && !isNaN(clientLng) && isFinite(clientLng)
-    });
-    
     // Si no hay coordenadas válidas del cliente en la BD, intentar geocodificar
     if (!clientLat || !clientLng || isNaN(clientLat) || isNaN(clientLng) || 
         !isFinite(clientLat) || !isFinite(clientLng)) {
       
       if (pedido.direccion_completa) {
-        console.log('🔍 Geocodificando dirección:', pedido.direccion_completa);
         try {
           const geocodeServices = [
             `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(pedido.direccion_completa + ', Panamá')}&limit=1&countrycodes=pa`,
@@ -409,22 +384,21 @@ const HomeRepartidorPage = () => {
                 }
                 
                 if (clientLat && clientLng && !isNaN(clientLat) && !isNaN(clientLng)) {
-                  console.log(`✅ Coordenadas geocodificadas:`, { lat: clientLat, lng: clientLng });
                   break;
                 }
               }
             } catch (serviceError) {
-              console.warn(`⚠️ Error en servicio ${i + 1}:`, serviceError);
+              console.warn(`Error en servicio ${i + 1}:`, serviceError);
             }
           }
         } catch (error) {
-          console.error('❌ Error al geocodificar:', error);
+          console.error('Error al geocodificar:', error);
         }
       }
       
       // Si aún no hay coordenadas válidas, mostrar error
       if (!clientLat || !clientLng || isNaN(clientLat) || isNaN(clientLng)) {
-        console.error('❌ No se pudieron obtener coordenadas válidas del cliente');
+        console.error('No se pudieron obtener coordenadas válidas del cliente');
         alert(`No se pudo obtener la ubicación del cliente para el pedido #${pedidoId}. Verifica que la dirección sea válida en la base de datos.`);
         setCargandoMapa(prev => ({ ...prev, [pedidoId]: false }));
         return;
@@ -435,7 +409,7 @@ const HomeRepartidorPage = () => {
     if (!repartidorUbicacion.lat || !repartidorUbicacion.lng || 
         isNaN(repartidorUbicacion.lat) || isNaN(repartidorUbicacion.lng) ||
         !isFinite(repartidorUbicacion.lat) || !isFinite(repartidorUbicacion.lng)) {
-      console.error('❌ Coordenadas del repartidor inválidas:', repartidorUbicacion);
+      console.error('Coordenadas del repartidor inválidas:', repartidorUbicacion);
       alert('Ubicación del repartidor no válida. Refrescando ubicación...');
       try {
         await obtenerUbicacionActual();
@@ -447,29 +421,23 @@ const HomeRepartidorPage = () => {
 
     // Limpiar mapa anterior si existe
     if (mapInstances[pedidoId]) {
-      console.log('🧹 Limpiando mapa anterior');
       mapInstances[pedidoId].remove();
     }
 
     // Verificar que el contenedor existe
     const container = document.getElementById(contenedorId);
     if (!container) {
-      console.error('❌ Contenedor del mapa no encontrado:', contenedorId);
+      console.error('Contenedor del mapa no encontrado:', contenedorId);
       setCargandoMapa(prev => ({ ...prev, [pedidoId]: false }));
       return;
     }
 
     // Coordenadas finales validadas
-    console.log('📍 COORDENADAS FINALES VALIDADAS:');
-    console.log('🚚 Repartidor (GPS actual):', { lat: repartidorUbicacion.lat, lng: repartidorUbicacion.lng });
-    console.log('🏠 Cliente (Base de datos):', { lat: clientLat, lng: clientLng });
 
     // Calcular centro y crear mapa
     const centerLng = (repartidorUbicacion.lng + clientLng) / 2;
     const centerLat = (repartidorUbicacion.lat + clientLat) / 2;
     
-    console.log('🎯 Centro del mapa:', { lat: centerLat, lng: centerLng });
-
     let map;
     try {
       map = new maplibregl.Map({
@@ -480,8 +448,6 @@ const HomeRepartidorPage = () => {
         attributionControl: false
       });
 
-      console.log('✅ Mapa creado exitosamente');
-      
       // Manejar errores de imágenes faltantes
       map.on('styleimagemissing', (e) => {
         const size = 50;
@@ -493,8 +459,6 @@ const HomeRepartidorPage = () => {
       });
       
       map.on('load', () => {
-        console.log('🗺️ Mapa cargado, ajustando vista...');
-        
         // Crear bounds que incluyan ambos puntos
         const bounds = new maplibregl.LngLatBounds()
           .extend([repartidorUbicacion.lng, repartidorUbicacion.lat])
@@ -504,7 +468,7 @@ const HomeRepartidorPage = () => {
       });
       
     } catch (mapError) {
-      console.error('❌ Error al crear el mapa:', mapError);
+      console.error('Error al crear el mapa:', mapError);
       alert('Error al crear el mapa: ' + mapError.message);
       setCargandoMapa(prev => ({ ...prev, [pedidoId]: false }));
       return;
@@ -512,8 +476,6 @@ const HomeRepartidorPage = () => {
 
     // Agregar marcadores
     try {
-      console.log('📍 Agregando marcadores...');
-      
       // Marcador del repartidor (azul) - ubicación GPS actual
       const repartidorMarker = new maplibregl.Marker({ 
         color: '#2563eb',
@@ -522,7 +484,7 @@ const HomeRepartidorPage = () => {
         .setLngLat([repartidorUbicacion.lng, repartidorUbicacion.lat])
         .setPopup(new maplibregl.Popup().setHTML(`
           <div style="padding: 8px;">
-            <strong>🚚 Tu ubicación (GPS)</strong><br>
+            <strong><FaTruck style={{marginRight: '5px'}} />Tu ubicación (GPS)</strong><br>
             <small>Actualizada automáticamente<br>
             Lat: ${repartidorUbicacion.lat.toFixed(6)}<br>
             Lng: ${repartidorUbicacion.lng.toFixed(6)}</small>
@@ -544,7 +506,7 @@ const HomeRepartidorPage = () => {
         .setLngLat([clientLng, clientLat])
         .setPopup(new maplibregl.Popup().setHTML(`
           <div style="padding: 8px;">
-            <strong>🏠 ${pedido.cliente_nombre || 'Cliente'}</strong><br>
+            <strong><FaHome style={{marginRight: '5px'}} />${pedido.cliente_nombre || 'Cliente'}</strong><br>
             <small>${pedido.direccion_completa || 'Dirección no especificada'}<br>
             Distancia: ${distancia.toFixed(2)} km<br>
             Lat: ${clientLat.toFixed(6)}<br>
@@ -553,16 +515,12 @@ const HomeRepartidorPage = () => {
         `))
         .addTo(map);
 
-      console.log('✅ Marcadores agregados');
-      console.log(`📏 Distancia calculada: ${distancia.toFixed(2)} km`);
     } catch (markerError) {
-      console.error('❌ Error al agregar marcadores:', markerError);
+      console.error('Error al agregar marcadores:', markerError);
     }
 
     // Obtener ruta real usando OSRM
     try {
-      console.log('🛣️ Obteniendo ruta real...');
-      
       const routeUrl = `https://router.project-osrm.org/route/v1/driving/${repartidorUbicacion.lng},${repartidorUbicacion.lat};${clientLng},${clientLat}?geometries=geojson&overview=full`;
       
       const routeRes = await fetch(routeUrl);
@@ -572,7 +530,6 @@ const HomeRepartidorPage = () => {
         
         if (routeData.routes && routeData.routes[0]) {
           const route = routeData.routes[0];
-          console.log(`🛣️ Ruta obtenida - Distancia: ${(route.distance / 1000).toFixed(2)}km, Duración: ${Math.round(route.duration / 60)}min`);
           
           if (map.loaded()) {
             agregarRutaAlMapa(map, route);
@@ -586,7 +543,7 @@ const HomeRepartidorPage = () => {
         throw new Error(`OSRM API error: ${routeRes.status}`);
       }
     } catch (error) {
-      console.warn('⚠️ Error al obtener ruta, usando línea directa:', error);
+      console.warn('Error al obtener ruta, usando línea directa:', error);
       
       if (map.loaded()) {
         agregarLineaDirecta(map, repartidorUbicacion, clientLat, clientLng);
@@ -619,9 +576,8 @@ const HomeRepartidorPage = () => {
           }
         });
         
-        console.log('✅ Ruta real agregada al mapa');
       } catch (layerError) {
-        console.error('❌ Error al agregar capa de ruta:', layerError);
+        console.error('Error al agregar capa de ruta:', layerError);
       }
     }
 
@@ -658,17 +614,14 @@ const HomeRepartidorPage = () => {
           }
         });
         
-        console.log('✅ Línea directa agregada como fallback');
       } catch (fallbackError) {
-        console.error('❌ Error al agregar línea directa:', fallbackError);
+        console.error('Error al agregar línea directa:', fallbackError);
       }
     }
 
     // Guardar instancia del mapa y marcar como terminado
     setMapInstances(prev => ({ ...prev, [pedidoId]: map }));
     setCargandoMapa(prev => ({ ...prev, [pedidoId]: false }));
-    
-    console.log('🎉 Mapa creado completamente con datos reales para pedido', pedidoId);
   };
 
   // Función auxiliar para calcular distancia entre dos puntos (fórmula de Haversine)
@@ -1054,10 +1007,9 @@ const HomeRepartidorPage = () => {
               <button
                 onClick={() => setPedidoSeleccionado(null)}
                 style={{
-                  background: '#f3f4f6',
+                  background: '#ffffffff',
                   border: 'none',
                   borderRadius: '50%',
-                  width: '40px',
                   height: '40px',
                   fontSize: '1.2rem',
                   cursor: 'pointer',

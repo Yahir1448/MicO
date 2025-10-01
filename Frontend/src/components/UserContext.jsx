@@ -57,7 +57,6 @@ export const UserProvider = ({ children }) => {
       if (savedUser) {
         const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
-        // Solo cargar historial si hay un usuario válido
         fetchOrderHistory();
       }
     } catch (error) {

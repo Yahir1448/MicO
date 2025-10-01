@@ -36,43 +36,6 @@ const AddressManager = ({ selectedAddress, onAddressSelect, onClose }) => {
     }
   };
 
-  const saveAddresses = (addressList) => {
-    // Mantener localStorage como respaldo
-    localStorage.setItem('userAddresses', JSON.stringify(addressList));
-    setAddresses(addressList);
-  };
-
-  const getCurrentLocation = () => {
-    setGettingLocation(true);
-    
-    if (!navigator.geolocation) {
-      alert('La geolocalización no está soportada en este navegador');
-      setGettingLocation(false);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setNewAddress(prev => ({
-          ...prev,
-          latitud: position.coords.latitude,
-          longitud: position.coords.longitude
-        }));
-        setGettingLocation(false);
-      },
-      (error) => {
-        console.error('Error getting location:', error);
-        alert('No se pudo obtener la ubicación. Por favor, permite el acceso a la ubicación.');
-        setGettingLocation(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000
-      }
-    );
-  };
-
   const handleSaveAddress = () => {
     if (!newAddress.nombre.trim() || !newAddress.direccion.trim()) {
       alert('Por favor completa el nombre y la dirección');
@@ -100,8 +63,6 @@ const AddressManager = ({ selectedAddress, onAddressSelect, onClose }) => {
             latitud: parseFloat(position.coords.latitude.toFixed(7)),
             longitud: parseFloat(position.coords.longitude.toFixed(7))
           };
-
-          console.log('Datos a enviar:', addressToSave); // Debug
 
           let savedAddress;
           if (editingAddress) {

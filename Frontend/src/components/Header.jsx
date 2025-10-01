@@ -34,7 +34,6 @@ const Header = ({ onMenuToggle }) => {
     };
 
     fetchCartCount();
-    // Solo actualiza cuando se dispara el evento personalizado
     const handleCartUpdated = async () => {
       // Esperar un pequeño tiempo para asegurar que el backend ya limpió el carrito
       setTimeout(async () => {
@@ -53,7 +52,7 @@ const Header = ({ onMenuToggle }) => {
         } catch (error) {
           setCartCount(0);
         }
-      }, 200); // 200ms de espera
+      }, 200);
     };
     window.addEventListener('cartUpdated', handleCartUpdated);
 

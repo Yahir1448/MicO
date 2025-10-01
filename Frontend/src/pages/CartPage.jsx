@@ -68,10 +68,6 @@ const CartPage = () => {
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (err) {}
   };
-  // Eliminada la versión antigua de removeItem para evitar duplicidad
-
-  // Eliminada la función de aplicar cupón
-
   const calculateTotal = () => {
     return cart.reduce((total, item) => total + (parseFloat(item.producto.precio) * item.quantity), 0);
   };
@@ -102,7 +98,6 @@ const CartPage = () => {
     
     const datosParaCheckout = Object.values(pedidosPorEmpresa);
     
-    // Guardar datos del carrito para checkout (NO pedidos creados)
     localStorage.setItem('cartDataForCheckout', JSON.stringify(datosParaCheckout));
     navigate('/checkout');
   };
@@ -165,7 +160,6 @@ const CartPage = () => {
   // Agrupar productos por empresa
   const groupedByEmpresa = cart.reduce((acc, item) => {
     const empresaId = item.producto.empresa?.id || item.producto.empresa;
-    // Ahora producto.empresa es un objeto con nombre
     let empresaNombre = '';
     if (item.producto.empresa && item.producto.empresa.nombre) {
       empresaNombre = item.producto.empresa.nombre;

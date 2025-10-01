@@ -12,7 +12,6 @@ import RegisterPage from './pages/RegisterPage';
 import OrderPage from './pages/OrderPage';
 import OrderHistoryPage from './pages/OrderHistoryPage';
 import CompanyProductsPage from './pages/CompanyProductsPage';
-import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderConfirmationPage from './pages/OrderConfirmationPage';
@@ -149,7 +148,6 @@ function App() {
             
             {/* Rutas públicas o accesibles para múltiples roles */}
             <Route path="/:empresaNombre/products" element={<CompanyProductsPage />} />
-            <Route path="/product/:productId" element={<ProductDetailPage />} />
             <Route path="/ubicacion" element={
               <PrivateRoute>
                 <UbicacionPage />

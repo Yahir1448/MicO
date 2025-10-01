@@ -13,13 +13,6 @@ const HamburgerMenu = ({ isOpen, onToggle }) => {
   const handleClose = () => onToggle();
   const handleNav = () => onToggle();
 
-  // Mock cupones
-  const cupones = [
-    { code: 'APPLE10', desc: '10% OFF en tu próxima compra' },
-    { code: 'ENVIOGRATIS', desc: 'Envío gratis en pedidos $30+' },
-    { code: '2X1BURGER', desc: '2x1 en Burger Palace' },
-  ];
-
   const menuItems = [
     { path: '/', icon: FaHome, label: 'Inicio', roles: ['usuarionormal', 'admin'] },
     { path: '/cart', icon: FaShoppingCart, label: 'Carrito', roles: ['usuarionormal'] },

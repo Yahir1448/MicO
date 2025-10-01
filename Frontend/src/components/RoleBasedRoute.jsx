@@ -25,7 +25,6 @@ const getDefaultRouteForRole = (role) => {
     case 'repartidor':
       return '/homeRepartidor';
     case 'empresa':
-      // Para empresas, necesitamos el nombre de la empresa
       try {
         const user = localStorage.getItem('user');
         const userData = JSON.parse(user);
@@ -49,16 +48,13 @@ const RoleBasedRoute = ({ children, allowedRoles, redirectTo = null, showError =
     return <Navigate to="/login" replace />;
   }
 
-  const userRole = getUserRole();
-  
-  // Si no se puede obtener el rol, redirigir a login
+  const userRole = getUserRole(); 
   if (!userRole) {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     return <Navigate to="/login" replace />;
   }
 
-  // Si el rol del usuario no está permitido para esta ruta
   if (allowedRoles && !allowedRoles.includes(userRole)) {
     if (showError) {
       return (
