@@ -238,7 +238,7 @@ const HomePage = () => {
       </section>
       {/* CONTENIDO CENTRADO DEBAJO DEL HERO - CARD GRANDE CENTRADA */}
       <div style={{
-        width: '100vw',
+        width: '101vw',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'flex-start',
