@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaHamburger, FaUser, FaStore, FaBiking, FaEye, FaEyeSlash } from "react-icons/fa";
@@ -33,13 +32,68 @@ const register = async (data) => {
     },
     body: JSON.stringify(data),
   });
+
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.detail || errorData.message || 'Error en el registro');
+
+    // 1) si el backend manda detail/message, lo usamos
+    let msg = errorData?.detail || errorData?.message;
+
+    // 2) si vienen errores por campo (ej: { email: ["Correo inválido"], password: [...] })
+    if (!msg && errorData && typeof errorData === 'object') {
+      const fieldLabels = {
+        email: 'Correo electrónico',
+        password: 'Contraseña',
+        name: 'Nombre',
+        username: 'Nombre de usuario',
+        telefono: 'Teléfono',
+        phone: 'Teléfono',
+        phone_number: 'Teléfono',
+        direccion: 'Dirección',
+        non_field_errors: 'Error',
+      };
+
+      // caso típico: objeto { campo: [errores] }
+      if (!Array.isArray(errorData)) {
+        const parts = Object.entries(errorData).map(([field, errors]) => {
+          const label = fieldLabels[field] || field;
+          const text = Array.isArray(errors) ? errors.join(', ') : String(errors);
+          return `${label}: ${text}`;
+        });
+        if (parts.length > 0) {
+          msg = parts.join(' | ');
+        }
+      } else {
+        // por si acaso viene como array de objetos [{ field, message }]
+        const parts = errorData.map((item) => {
+          if (item && typeof item === 'object') {
+            const field = item.field || item.campo || 'Error';
+            const label = fieldLabels[field] || field;
+            const text = item.message || item.msg || JSON.stringify(item);
+            return `${label}: ${text}`;
+          }
+          return String(item);
+        });
+        if (parts.length > 0) {
+          msg = parts.join(' | ');
+        }
+      }
+    }
+
+    // 3) fallback genérico: nunca nos quedamos sin mensaje
+    if (!msg) {
+      try {
+        msg = `Error en el registro: ${JSON.stringify(errorData)}`;
+      } catch {
+        msg = 'Error en el registro. Verifica los datos ingresados.';
+      }
+    }
+
+    throw new Error(msg);
   }
+
   return await response.json();
 };
-
 
 const RegisterPage = () => {
   const [role, setRole] = useState('usuarionormal');
@@ -65,6 +119,22 @@ const RegisterPage = () => {
     setSuccess('');
     setMsg('');
     setMsgType('');
+
+    // ✅ validación frontend: contraseña demasiado parecida al nombre
+    const normalizedName = name.trim().toLowerCase().replace(/\s+/g, '');
+    const normalizedPassword = password.trim().toLowerCase();
+
+    if (
+      normalizedName &&
+      normalizedPassword &&
+      (normalizedPassword.includes(normalizedName) ||
+        normalizedName.includes(normalizedPassword))
+    ) {
+      setMsg('La contraseña es demasiado parecida a tu nombre. Usa una contraseña más segura.');
+      setMsgType('error');
+      return;
+    }
+
     try {
       let data = { name, email, telefono, direccion, password, role };
       if (role === 'empresa') {
